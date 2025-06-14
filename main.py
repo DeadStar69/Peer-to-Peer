@@ -1,8 +1,12 @@
+from handler import Handler
+from server import Server
+from client import Client
 class Main:
     def __init__(self):
-        pass
+        self.handler = Handler()
+        self.server = Server(self.handler)
+        self.client = Client(self.handler)
         
-
     def run():
         pass
 

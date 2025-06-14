@@ -1,5 +1,5 @@
 import socket
 
 class Server:
-    def __init__(self):
+    def __init__(self, handler):
         pass
