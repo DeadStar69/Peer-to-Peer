@@ -8,14 +8,12 @@ class Server:
         self.handler = handler
 
         try:
-
-            self.IP = socket.gethostbyname(socket.gethostname())
-            self.handler.server_connections.append(self.IP)
-
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.bind((self.IP, PORT))
-            self.s.listen()
-            self.s.settimeout(1)
+            self.handler.connections.append(self.handler.IP)
+            self.s = None
+            # self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # self.s.bind((self.handler.IP, PORT))
+            # self.s.listen()
+            # self.s.settimeout(1)
 
         except socket.error as e:
             print(e)
@@ -25,30 +23,45 @@ class Server:
 
         while True:
 
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.bind((self.handler.IP, PORT))
+            self.s.listen()
+            self.s.settimeout(1)
+
+
             if not self.handler.server_running: break
 
             try:
                 conn, addr = self.s.accept()
                 print(addr, "CONNECTED")
-                print(self.handler.server_connections)
-                conn.send(self.create_ip_header(self.handler.server_connections))
-                self.handler.server_connections.append(addr[0])
-                conn.close()
-                self.s.close()
 
-            except TimeoutError as e:
+                conn.send(self.createIpHeader(self.handler.connections))
+
+                if addr[0] not in self.handler.connections: self.handler.connections.append(addr[0])
+
+                raw_message = b""
+                while True:
+                    data = conn.recv(BUFFER)
+                    if not data:
+                        break
+                    raw_message += data
+                    if ENDMARKER in raw_message:
+                        break
+
+                message = raw_message.split(ENDMARKER)[0].decode()
+
+                print(self.handler.connections)
+                print(message)
+                conn.close()
+
+            except socket.timeout:
                 continue
 
-            else:
-                conn.close()
-                self.s.close()
-                break
 
-    def create_ip_header(self, connections, size=HEADER_SIZE):
+    def createIpHeader(self, connections, size=HEADER_LENGTH):
         padded_ips = (connections + ["0.0.0.0"] * size)[:size]
         binary_ips = [socket.inet_aton(ip) for ip in padded_ips]
         return b"".join(binary_ips)
-
 
     
     def stop(self):
