@@ -32,6 +32,7 @@ class Client:
 
             try:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.s.settimeout(5)
                 self.s.connect((ip, PORT))
 
                 other_connections = self.disassembleIpHeader(self.s.recv(20))
@@ -40,13 +41,11 @@ class Client:
                     self.handler.connections = longerList(other_connections, self.handler.connections)
 
                 total_sent = 0
-                data_bytes = message.encode()
+                data = message.encode() + ENDMARKER
 
-                data_bytes = data_bytes + ENDMARKER
+                while total_sent < len(data):
 
-                while total_sent < len(data_bytes):
-
-                    sent = self.s.send(data_bytes[total_sent:])
+                    sent = self.s.send(data[total_sent:])
 
                     
                     total_sent += sent
