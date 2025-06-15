@@ -2,4 +2,5 @@ import socket
 
 class Handler:
     def __init__(self):
-        pass
+        self.server_running = True
+        self.client_running = True
