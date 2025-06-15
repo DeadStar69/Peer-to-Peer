@@ -12,6 +12,7 @@ class Client:
     def connectTo(self, ip):
 
         try:
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.s.connect((ip, PORT))
 
             self.handler.connections = self.disassembleIpHeader(self.s.recv(20))
@@ -32,10 +33,10 @@ class Client:
         for ip in self.handler.connections:
 
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((ip, PORT))
+                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connect((ip, PORT))
 
-                other_connections = self.disassembleIpHeader(s.recv(20))
+                other_connections = self.disassembleIpHeader(self.s.recv(20))
 
                 if other_connections != self.handler.connections:
                     self.handler.connections = longerList(other_connections, self.handler.connections)
@@ -47,7 +48,7 @@ class Client:
 
                 while total_sent < len(data_bytes):
 
-                    sent = s.send(data_bytes[total_sent:])
+                    sent = self.s.send(data_bytes[total_sent:])
 
                     
                     total_sent += sent
