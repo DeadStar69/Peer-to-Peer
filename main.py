@@ -22,6 +22,7 @@ class Main:
         client_thread.start()
 
         server_thread.join()
+        client_thread.join()
 
 
 if __name__ == "__main__":

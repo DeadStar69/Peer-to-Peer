@@ -16,5 +16,6 @@ class Client:
 
     def stop(self):
         self.handler.client_running = False
+        self.s.close()
         
 
