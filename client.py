@@ -11,8 +11,10 @@ class Client:
     def run(self):
         self.s.connect((socket.gethostbyname(socket.gethostname()), PORT))
         self.s.send("retard".encode())
-        self.s.close()
+        self.stop
+        
 
     def stop(self):
         self.handler.client_running = False
+        self.s.close()
 
