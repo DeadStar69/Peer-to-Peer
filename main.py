@@ -21,8 +21,7 @@ class Main:
         while True:
             a = input()
             if a == "exit":
-                server_stopping_thread = threading.Thread(target=self.server.stop)
-                server_stopping_thread.start()
+                threading.Thread(target=self.server.stop).start()
                 sys.exit()
 
             elif a == "msg":

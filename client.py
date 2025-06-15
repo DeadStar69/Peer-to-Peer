@@ -6,10 +6,6 @@ class Client:
     def __init__(self, handler):
         self.handler = handler
 
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.settimeout(5)
-
-
     def connectTo(self, ip):
 
         try:

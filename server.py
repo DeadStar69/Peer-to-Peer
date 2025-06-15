@@ -7,29 +7,25 @@ class Server:
     def __init__(self, handler):
         self.handler = handler
 
-        try:
-            self.handler.connections.append(self.handler.IP)
-            self.s = None
-            # self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # self.s.bind((self.handler.IP, PORT))
-            # self.s.listen()
-            # self.s.settimeout(1)
-
-        except socket.error as e:
-            print(e)
-            sys.exit()
+        self.handler.connections.append(self.handler.IP)
+        self.s = None
 
     def run(self):
 
         while True:
 
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.bind((self.handler.IP, PORT))
-            self.s.listen()
-            self.s.settimeout(1)
-
-
             if not self.handler.server_running: break
+            
+            try:
+                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.s.bind((self.handler.IP, PORT))
+                self.s.listen()
+                self.s.settimeout(1)
+
+            except socket.error as e:
+                print(e)
+                sys.exit()
+
 
             try:
                 conn, addr = self.s.accept()
@@ -40,11 +36,15 @@ class Server:
                 if addr[0] not in self.handler.connections: self.handler.connections.append(addr[0])
 
                 raw_message = b""
+                
                 while True:
                     data = conn.recv(BUFFER)
+
                     if not data:
                         break
+
                     raw_message += data
+
                     if ENDMARKER in raw_message:
                         break
 
