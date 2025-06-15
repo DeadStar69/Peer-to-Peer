@@ -12,6 +12,7 @@ class Client:
         self.s.connect((addr, PORT))
         self.s.send("retard".encode())
         self.s.close()
+        print("poslato")
 
     def stop(self):
         self.handler.client_running = False

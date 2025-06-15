@@ -18,6 +18,7 @@ class Server:
             if not self.handler.server_running: break
 
             conn, addr = self.s.accept()
+            print(addr, "mrs")
             print(conn.recv(1024).decode())
             conn.close()
             self.s.close()
