@@ -11,9 +11,18 @@ class Main:
         self.server = Server(self.handler)
         self.client = Client(self.handler)
         self.window = Window(self.server, self.client)
+
         
     def run(self):
-        pass
+        server_thread = threading.Thread(target=self.server.run)
+        server_thread.start()
+
+        
+        client_thread = threading.Thread(target=self.client.run)
+        client_thread.start()
+
+        server_thread.join()
+
 
 if __name__ == "__main__":
     main = Main()

@@ -1,12 +1,18 @@
 import socket
 
+from statics import PORT
+
 class Client:
     def __init__(self, handler):
-        pass
+        self.handler = handler
+
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def run(self):
-        pass
+        self.s.connect((socket.gethostbyname(socket.gethostname()), PORT))
+        self.s.send("retard".encode())
+        self.s.close()
 
     def stop(self):
-        pass
+        self.handler.client_running = False
 
