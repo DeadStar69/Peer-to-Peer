@@ -7,12 +7,14 @@ class Client:
         self.handler = handler
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.settimeout(5)
 
 
     def connectTo(self, ip):
 
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.settimeout(5)
             self.s.connect((ip, PORT))
 
             self.handler.connections = self.disassembleIpHeader(self.s.recv(20))
@@ -34,7 +36,7 @@ class Client:
 
             try:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.connect((ip, PORT))
+                self.s.connect((ip, PORT))
 
                 other_connections = self.disassembleIpHeader(self.s.recv(20))
 
