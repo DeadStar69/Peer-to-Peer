@@ -18,10 +18,10 @@ class Main:
         server_thread.start()
 
         
-        client_thread = threading.Thread(target=self.client.run, args=(str(input()), ), daemon=True)
+        client_thread = threading.Thread(target=self.client.connectTo, args=(input(), ), daemon=True)
         client_thread.start()
 
-        server_thread.join()
+
         client_thread.join()
 
 
