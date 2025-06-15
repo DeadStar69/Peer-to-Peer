@@ -14,11 +14,11 @@ class Main:
 
         
     def run(self):
-        server_thread = threading.Thread(target=self.server.run)
+        server_thread = threading.Thread(target=self.server.run, daemon=True)
         server_thread.start()
 
         
-        client_thread = threading.Thread(target=self.client.run, args=(str(input()), ))
+        client_thread = threading.Thread(target=self.client.run, args=(str(input()), ), daemon=True)
         client_thread.start()
 
         server_thread.join()

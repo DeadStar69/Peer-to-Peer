@@ -20,6 +20,8 @@ class Server:
             conn, addr = self.s.accept()
             print(conn.recv(1024).decode())
             conn.close()
+            self.s.close()
+            break
 
     
     def stop(self):
