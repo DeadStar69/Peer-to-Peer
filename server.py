@@ -42,7 +42,7 @@ class Server:
                 continue
 
     def receive(self, conn, addr):
-        
+
         try:
             conn.send(self.createIpHeader(self.handler.connections))
             client_port = int(conn.recv(5).decode().rstrip("#"))
@@ -73,7 +73,7 @@ class Server:
 
                 print(f"{addr[0]}> {message}")
 
-            print("Current connections:", self.handler.connections)
+            #print("Current connections:", self.handler.connections)
 
         except socket.error as e:
             print(e)

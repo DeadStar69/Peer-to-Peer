@@ -24,8 +24,8 @@ class Client:
             if [ip, port] not in self.handler.connections:
                 self.handler.connections.append([ip, port])
 
-            print(f"Connected peers: {other_connections}")
-            print(f"Current connections: {self.handler.connections}")
+            #print(f"Connected peers: {other_connections}")
+            #print(f"Current connections: {self.handler.connections}")
 
             for other_ip, other_port in other_connections:
                 if [other_ip, other_port] not in self.handler.connections:
@@ -37,13 +37,13 @@ class Client:
             self.sendMessages(f"joined the network")
 
         except socket.error as e:
-            print("ConnectTo error:", e)
+            print("Connection error:", e)
 
     def sendMessages(self, message: str):
         temp = []
 
         for ip, port in self.handler.connections[:]:
-            
+
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(5)
@@ -65,8 +65,10 @@ class Client:
 
 
         for connection in self.handler.connections:
+
             if connection not in temp:
                 ip, port = connection
+
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.settimeout(5)
@@ -86,10 +88,12 @@ class Client:
                     if connection in self.handler.connections:
                         self.handler.connections.remove(connection)
 
-        print("Final connections:", self.handler.connections)
+        #print("Final connections:", self.handler.connections)
 
     def sendFile(self, file_path: str, file_name: str):
+        
         for ip, port in self.handler.connections[:]:
+
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(5)
@@ -126,6 +130,7 @@ class Client:
 
     def disassembleInfoHeader(self, header, size=HEADER_LENGTH):
         connections = []
+
         for i in range(size):
             offset = i * 6
             ip_bytes = header[offset:offset+4]
