@@ -40,15 +40,36 @@ class Client:
                 if other_connections != self.handler.connections:
                     self.handler.connections = longerList(other_connections, self.handler.connections)
 
-                total_sent = 0
-                data = message.encode() + ENDMARKER
+                self.s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER-25}}".encode())
 
-                while total_sent < len(data):
+                self.s.close()
 
-                    sent = self.s.send(data[total_sent:])
+            except socket.error as e:
+                self.handler.connections.remove(ip)
 
-                    
-                    total_sent += sent
+    def sendFile(self, file_path: str, file_name: str):
+        for ip in self.handler.connections:
+
+            try:
+                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.s.settimeout(5)
+                self.s.connect((ip, PORT))
+
+                other_connections = self.disassembleIpHeader(self.s.recv(20))
+
+                if other_connections != self.handler.connections:
+                    self.handler.connections = longerList(other_connections, self.handler.connections)
+
+                self.s.send(f"<FILETRANSFERPROTOCOL>{file_name:#<{BUFFER-22}}".encode())
+
+                with open(f"{file_path}", "rb") as f:
+                    data = f.read(BUFFER)
+                    while data:
+                        if not self.handler.client_running: break
+                        self.s.send(data)
+                        data = f.read(BUFFER)
+                    f.close()
+                    self.s.send(ENDMARKER)
 
                 self.s.close()
 
