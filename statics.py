@@ -30,25 +30,3 @@ def disassembleInfoHeader(header, size=HEADER_LENGTH):
             connections.append([ip, port])
 
     return connections
-
-def createHistoryHeader(history, size=HEADER_LENGTH):
-    padded = (history + [""] * size)[:size]
-    return "".join(f"{msg:#<{BUFFER}}" for msg in padded).encode()
-
-def disassembleHistoryHeader(header, size=HEADER_LENGTH):
-    messages = []
-    for i in range(size):
-        offset = i * BUFFER
-        chunk = header[offset : offset + BUFFER].decode().rstrip("#")
-        if chunk:
-            messages.append(chunk)
-    return messages
-
-def recv_all(sock, size):
-    data = b""
-    while len(data) < size:
-        chunk = sock.recv(size - len(data))
-        if not chunk:
-            return
-        data += chunk
-    return data

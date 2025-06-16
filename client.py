@@ -1,5 +1,5 @@
 import socket
-import struct
+import json
 import os
 from statics import *
 
@@ -10,17 +10,23 @@ class Client:
     def connectTo(self, ip, port):
 
         try:
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.settimeout(5)
-            self.s.connect((ip, port))
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(10)
+            print(ip, port)
+            s.connect((ip, port))
 
-            other_connections = disassembleInfoHeader(self.s.recv(HEADER_SIZE))
-            #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+            other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
+            history_size = int(s.recv(20).decode().rstrip("#"))
+            other_history = json.loads(s.recv(history_size).decode())
 
-            self.s.send(f"{self.handler.PORT:#<5}".encode())
+            print(history_size)
+
+            s.send(f"{self.handler.PORT:#<5}".encode())
 
             self.handler.connections = mergeLists(self.handler.connections, other_connections)
-            #self.handler.history = mergeLists(self.handler.history, other_history)
+            self.handler.history = mergeLists(self.handler.history, other_history)
+
+            print(self.handler.history)
 
             if [ip, port] not in self.handler.connections:
                 self.handler.connections.append([ip, port])
@@ -33,9 +39,11 @@ class Client:
                     print(f"Connecting to new peer from {ip}:{port} → {other_ip}:{other_port}")
                     self.connectTo(other_ip, other_port)
 
-            self.s.close()
+            s.close()
 
             self.sendMessages(f"joined the network")
+
+            
 
         except socket.error as e:
             print("Connection error:", e)
@@ -53,12 +61,13 @@ class Client:
                 temp.append([ip, port])
 
                 other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-                #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+                history_size = int(s.recv(20).decode().rstrip("#"))
+                other_history = json.loads(s.recv(history_size).decode())
 
                 s.send(f"{self.handler.PORT:#<5}".encode())
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                #self.handler.history = mergeLists(self.handler.history, other_history)
+                self.handler.history = mergeLists(self.handler.history, other_history)
 
                 s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
                 s.close()
@@ -79,12 +88,13 @@ class Client:
                     s.connect((ip, port))
 
                     other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-                    #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+                    history_size = int(s.recv(20).decode().rstrip("#"))
+                    other_history = json.loads(s.recv(history_size).decode())
 
                     s.send(f"{self.handler.PORT:#<5}".encode())
 
                     self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                    #self.handler.history = mergeLists(self.handler.history, other_history)
+                    self.handler.history = mergeLists(self.handler.history, other_history)
 
                     s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
                     s.close()
@@ -107,12 +117,13 @@ class Client:
                 s.connect((ip, port))
 
                 other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-                #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+                # history_size = int(s.recv(20).decode().rstrip("#"))
+                # other_history = json.loads(s.recv(history_size).decode())
 
                 s.send(f"{port:#<5}".encode())
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                #self.handler.history = mergeLists(self.handler.history, other_history)
+                # self.handler.history = mergeLists(self.handler.history, other_history)
 
 
                 file_size = os.path.getsize(file_path)

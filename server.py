@@ -1,8 +1,8 @@
 import socket
-import struct
 import sys
 import os
 import threading
+import json
 
 from statics import *
 
@@ -45,12 +45,12 @@ class Server:
 
         try:
             conn.send(createIpHeader(self.handler.connections))
-            #conn.send(createHistoryHeader(self.handler.history))
+            history_temp = json.dumps(self.handler.history).encode()
+            conn.send(f"{len(history_temp):#<20}".encode())
+            conn.send(history_temp)
             
             client_port = int(conn.recv(5).decode().rstrip("#"))
             client_info = [addr[0], client_port]
-
-            
 
             if client_info not in self.handler.connections:
                 self.handler.connections.append(client_info)

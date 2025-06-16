@@ -10,4 +10,4 @@ class Handler:
         self.client_running = True
         self.connections = []
         self.connected = []
-        self.history = ["akjhsdjajdsav"]
+        self.history = ["asdsad"]
