@@ -76,6 +76,7 @@ class Server:
                 message = received_data[len("<MESSAGETRANSFERPROTOCOL>") :]
 
                 print(f"{addr[0]}> {message}")
+                self.handler.history.append(f"{addr[0]}> {message}")
 
             #print("Current connections:", self.handler.connections)
 

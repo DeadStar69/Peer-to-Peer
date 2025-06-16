@@ -41,9 +41,10 @@ class Client:
 
             s.close()
 
+            [print(x) for x in self.handler.history]
             self.sendMessages(f"joined the network")
 
-            
+
 
         except socket.error as e:
             print("Connection error:", e)
@@ -68,6 +69,8 @@ class Client:
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
                 self.handler.history = mergeLists(self.handler.history, other_history)
+
+                print(self.handler.history)
 
                 s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
                 s.close()
@@ -106,6 +109,7 @@ class Client:
                         self.handler.connections.remove(connection)
 
         #print("Final connections:", self.handler.connections)
+        self.handler.history.append(f"{self.handler.IP}> {message}")
 
     def sendFile(self, file_path: str, file_name: str):
         
