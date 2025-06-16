@@ -1,15 +1,18 @@
-import customtkinter
+import os
+import subprocess
+import sys
+import threading
+import time
 import tkinter as tk
 import ctypes as ct
-import subprocess
-import threading
-import os
 import webbrowser
 
-from widgets import Widgets
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 class Window(tk.Tk):
-    def __init__(self, resolution: str, title: str, icon: str, server, client):
+    def __init__(self, resolution: str, title: str, icon: str):#, server, client):
         super().__init__()
         self.withdraw()
         self.resizable(False, False)
@@ -41,9 +44,13 @@ class Window(tk.Tk):
         CreateToolTip(locate_default_gateway_button, "Opens the default gateway in the browser so you can portforward the secret port *5609*", 1000)
 
 
-        self.protocol('WM_DELETE_WINDOW', lambda: self.destroy() == threading.Thread(target=server.stop, daemon=True).start())
+        self.protocol('WM_DELETE_WINDOW', lambda: self.destroy())# == threading.Thread(target=server.stop, daemon=True).start())
 
         self.deiconify()
         self.focus_force()
 
         self.mainloop()
+
+if __name__ == '__main__':
+    Window("800x600", "Personal File Transmitter", f"{resource_path("assets\\gateway.png")}")
+    time.sleep(1)

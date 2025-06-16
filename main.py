@@ -26,7 +26,8 @@ class Main:
                 sys.exit()
 
             elif args[0] == "msg":
-                threading.Thread(target=self.client.sendMessages, args=(args[1],), daemon=True).start()
+                message = " ".join(args[1:])
+                threading.Thread(target=self.client.sendMessages, args=(message,), daemon=True).start()
 
             elif args[0] == "file":
                 threading.Thread(target=self.client.sendFile, args=(args[1], args[2]), daemon=True).start()

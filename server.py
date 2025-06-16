@@ -44,9 +44,13 @@ class Server:
     def receive(self, conn, addr):
 
         try:
-            conn.send(self.createIpHeader(self.handler.connections))
+            conn.send(createIpHeader(self.handler.connections))
+            #conn.send(createHistoryHeader(self.handler.history))
+            
             client_port = int(conn.recv(5).decode().rstrip("#"))
             client_info = [addr[0], client_port]
+
+            
 
             if client_info not in self.handler.connections:
                 self.handler.connections.append(client_info)
@@ -76,27 +80,13 @@ class Server:
             #print("Current connections:", self.handler.connections)
 
         except socket.error as e:
+            print("SERVER")
             print(e)
 
-    def createIpHeader(self, connections, size=HEADER_LENGTH):
-        padded_connections = (connections + [["0.0.0.0", 0]] * size)[:size]
-        binary_entries = [socket.inet_aton(ip) + struct.pack("!H", port) for ip, port in padded_connections]
-        return b"".join(binary_entries)
-    
-    def disassembleInfoHeader(self, header, size=HEADER_LENGTH):
-        connections = []
 
-        for i in range(size):
-            offset = i * 6
-            ip_bytes = header[offset:offset+4]
-            port_bytes = header[offset+4:offset+6]
-            ip = socket.inet_ntoa(ip_bytes)
-            port = struct.unpack("!H", port_bytes)[0]
-            if ip != "0.0.0.0" or port != 0:
-                connections.append([ip, port])
-
-        return connections
 
     def stop(self):
         self.handler.server_running = False
+        for conn in self.handler.connected:
+            conn.close()
         self.s.close()

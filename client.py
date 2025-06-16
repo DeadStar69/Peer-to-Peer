@@ -14,12 +14,13 @@ class Client:
             self.s.settimeout(5)
             self.s.connect((ip, port))
 
-            received = self.s.recv(HEADER_SIZE)
-            other_connections = self.disassembleInfoHeader(received)
+            other_connections = disassembleInfoHeader(self.s.recv(HEADER_SIZE))
+            #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
 
             self.s.send(f"{self.handler.PORT:#<5}".encode())
 
             self.handler.connections = mergeLists(self.handler.connections, other_connections)
+            #self.handler.history = mergeLists(self.handler.history, other_history)
 
             if [ip, port] not in self.handler.connections:
                 self.handler.connections.append([ip, port])
@@ -51,10 +52,13 @@ class Client:
 
                 temp.append([ip, port])
 
-                other_connections = self.disassembleInfoHeader(s.recv(HEADER_SIZE))
+                other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
+                #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+
                 s.send(f"{self.handler.PORT:#<5}".encode())
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
+                #self.handler.history = mergeLists(self.handler.history, other_history)
 
                 s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
                 s.close()
@@ -74,10 +78,13 @@ class Client:
                     s.settimeout(5)
                     s.connect((ip, port))
 
-                    other_connections = self.disassembleInfoHeader(s.recv(HEADER_SIZE))
+                    other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
+                    #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+
                     s.send(f"{self.handler.PORT:#<5}".encode())
 
                     self.handler.connections = mergeLists(self.handler.connections, other_connections)
+                    #self.handler.history = mergeLists(self.handler.history, other_history)
 
                     s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
                     s.close()
@@ -99,10 +106,14 @@ class Client:
                 s.settimeout(5)
                 s.connect((ip, port))
 
-                other_connections = self.disassembleInfoHeader(s.recv(HEADER_SIZE))
+                other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
+                #other_history = disassembleHistoryHeader(recv_all(self.s, HISTORY_SIZE))
+
                 s.send(f"{port:#<5}".encode())
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
+                #self.handler.history = mergeLists(self.handler.history, other_history)
+
 
                 file_size = os.path.getsize(file_path)
 
@@ -120,26 +131,6 @@ class Client:
                 if [ip, port] in self.handler.connections:
                     self.handler.connections.remove([ip, port])
 
-    def createIpHeader(self, connections, size=HEADER_LENGTH):
-        padded_connections = (connections + [["0.0.0.0", 0]] * size)[:size]
-        binary_entries = [
-            socket.inet_aton(ip) + struct.pack("!H", port)
-            for ip, port in padded_connections
-        ]
-        return b"".join(binary_entries)
-
-    def disassembleInfoHeader(self, header, size=HEADER_LENGTH):
-        connections = []
-
-        for i in range(size):
-            offset = i * 6
-            ip_bytes = header[offset:offset+4]
-            port_bytes = header[offset+4:offset+6]
-            ip = socket.inet_ntoa(ip_bytes)
-            port = struct.unpack("!H", port_bytes)[0]
-            if ip != "0.0.0.0" or port != 0:
-                connections.append([ip, port])
-        return connections
 
     def stop(self):
         self.handler.client_running = False
