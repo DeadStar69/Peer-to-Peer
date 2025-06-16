@@ -15,49 +15,55 @@ class Client:
             self.s.settimeout(5)
             self.s.connect((ip, port))
 
-            self.handler.connections = self.disassembleInfoHeader(self.s.recv(20))
+            self.handler.connections = self.disassembleInfoHeader(self.s.recv(HEADER_SIZE))
 
-            if self.handler.IP not in self.handler.connections: self.handler.connections.append(self.handler.IP)
+            self.s.send(f"{self.handler.PORT:#<5}".encode())
+
+            if port not in [x for y,x in self.handler.connections]: self.handler.connections.append([self.handler.IP, port])
+
+            if self.handler.PORT not in [x for y,x in self.handler.connections]: self.handler.connections.append([self.handler.IP, self.handler.PORT])
+
+            self.sendMessages(f"{[self.handler.IP, self.handler.PORT]} Connected to the network")
                 
             print(self.handler.connections)
 
-            self.s.close()
 
         except socket.error as e:
             print(e)
 
     def sendMessages(self, message: str):
         
-        for ip in self.handler.connections:
-
-            if ip == self.handler.IP: return
+        for ip, port in self.handler.connections:
 
             try:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.s.settimeout(5)
-                self.s.connect((ip, PORT))
+                self.s.connect((ip, port))
 
-                other_connections = self.disassembleInfoHeader(self.s.recv(20))
+                other_connections = self.disassembleInfoHeader(self.s.recv(HEADER_SIZE))
 
-                if other_connections != self.handler.connections:
-                    self.handler.connections = longerList(other_connections, self.handler.connections)
+                self.s.send(f"{port:#<5}".encode())
+
+                self.handler.connections = mergeLists(other_connections, self.handler.connections)
 
                 self.s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER-25}}".encode())
 
                 self.s.close()
 
             except socket.error as e:
-                self.handler.connections.remove(ip)
+                self.handler.connections.remove([ip, port])
 
     def sendFile(self, file_path: str, file_name: str):
-        for ip in self.handler.connections:
+        for ip, port in self.handler.connections:
 
             try:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.s.settimeout(5)
-                self.s.connect((ip, PORT))
+                self.s.connect((ip, port))
 
-                other_connections = self.disassembleInfoHeader(self.s.recv(20))
+                other_connections = self.disassembleInfoHeader(self.s.recv(HEADER_SIZE))
+
+                self.s.send(f"{port:#<5}".encode())
 
                 if other_connections != self.handler.connections:
                     self.handler.connections = longerList(other_connections, self.handler.connections)
@@ -77,10 +83,11 @@ class Client:
                 self.s.close()
 
             except socket.error as e:
-                self.handler.connections.remove(ip)
+                self.handler.connections.remove([ip, port])
 
     def disassembleInfoHeader(self, header, size=HEADER_LENGTH):
         connections = []
+
         for i in range(size):
             offset = i * 6
             ip_bytes = header[offset:offset+4]

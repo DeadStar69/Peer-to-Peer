@@ -17,7 +17,8 @@ class Server:
         self.s = None
 
     def run(self, port):
-        self.handler.connections.append([self.handler.IP, port])
+        self.handler.PORT = port
+        self.handler.connections.append([self.handler.IP, self.handler.PORT])
         while True:
 
             if not self.handler.server_running: break
@@ -35,46 +36,56 @@ class Server:
 
             try:
                 conn, addr = self.s.accept()
+                self.handler.connected.append(conn)
                 print(addr, "CONNECTED")
 
-                conn.send(self.createIpHeader(self.handler.connections))
-
-                if addr[0] not in self.handler.connections: self.handler.connections.append(addr[0])
-
-                received_data = conn.recv(BUFFER).decode().rstrip("#")
-
-                if received_data.startswith("<FILETRANSFERPROTOCOL>"):
-                    received_data = received_data[len("<FILETRANSFERPROTOCOL>"):]
-                    file_size_str, file_name = received_data.split(SEPARATOR)
-                    file_size = int(file_size_str)
+                try:
                     
-                    with open(f"output/{file_name}", "wb") as f:
-                        received_bytes = 0
-                        while received_bytes < file_size:
-                            if not self.handler.client_running:
-                                f.close()
-                                os.remove(f"output/{file_name}")
-                                break
-                            data = conn.recv(min(BUFFER, file_size - received_bytes))
-                            if not data:
-                                break
-                            f.write(data)
-                            received_bytes += len(data)
+                    conn.send(self.createIpHeader(self.handler.connections))
+
+                    client_port = int(conn.recv(5).decode().rstrip("#"))
+                    print(client_port)
+
+                    if client_port not in [x for y,x in self.handler.connections]: self.handler.connections.append([addr[0], client_port])
                         
-                        if received_bytes == file_size:
-                            print(f"File {file_name} received successfully")
-                        else:
-                            print("File received unsuccesfully")
+                    received_data = conn.recv(BUFFER).decode().rstrip("#")
 
-                elif received_data.startswith("<MESSAGETRANSFERPROTOCOL>") is True:
-                    received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
-                    message = received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
-                    print(f"{addr}> {message}")
+                    if received_data.startswith("<FILETRANSFERPROTOCOL>"):
+                        received_data = received_data[len("<FILETRANSFERPROTOCOL>"):]
+                        file_size_str, file_name = received_data.split(SEPARATOR)
+                        file_size = int(file_size_str)
+                        
+                        with open(f"output/{file_name}", "wb") as f:
+                            received_bytes = 0
+                            while received_bytes < file_size:
+                                if not self.handler.client_running:
+                                    f.close()
+                                    os.remove(f"output/{file_name}")
+                                    break
+                                data = conn.recv(min(BUFFER, file_size - received_bytes))
+                                if not data:
+                                    break
+                                f.write(data)
+                                received_bytes += len(data)
+                            
+                            if received_bytes == file_size:
+                                print(f"File {file_name} received successfully")
+                            else:
+                                print("File received unsuccesfully")
+
+                    elif received_data.startswith("<MESSAGETRANSFERPROTOCOL>") is True:
+                        received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
+                        message = received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
+                        print(f"{addr}> {message}")
 
 
-                print(self.handler.connections)
+                    print(self.handler.connections)
+
+                    conn.close()
                 
-                conn.close()
+                except socket.error as e:
+                    print(e)
+            
 
             except socket.timeout:
                 continue

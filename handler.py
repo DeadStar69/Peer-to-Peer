@@ -1,9 +1,13 @@
 import socket
 
+from statics import *
+
 class Handler:
     def __init__(self):
         self.IP = socket.gethostbyname(socket.gethostname())
+        self.PORT = PORT
         self.server_running = True
         self.client_running = True
         self.connections = []
-        self.username = self.IP
+        self.connected = []
+        self.history = []
