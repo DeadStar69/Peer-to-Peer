@@ -1,11 +1,12 @@
 import socket
+import struct
 import sys
 import os
 
 from statics import *
 
 class Server:
-    def __init__(self, handler):
+    def __init__(self, handler, ):
         self.handler = handler
 
         try:
@@ -13,18 +14,17 @@ class Server:
         except FileExistsError:
             pass
 
-        self.handler.connections.append(self.handler.IP)
         self.s = None
 
-    def run(self):
-
+    def run(self, port):
+        self.handler.connections.append([self.handler.IP, port])
         while True:
 
             if not self.handler.server_running: break
             
             try:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.s.bind((self.handler.IP, PORT))
+                self.s.bind((self.handler.IP, port))
                 self.s.listen()
                 self.s.settimeout(1)
 
@@ -43,27 +43,32 @@ class Server:
 
                 received_data = conn.recv(BUFFER).decode().rstrip("#")
 
-                if received_data.startswith("<FILETRANSFERPROTOCOL>") is True:
-                    file_name = received_data.strip("<FILETRANSFERPROTOCOL>")
-                    print(file_name)
+                if received_data.startswith("<FILETRANSFERPROTOCOL>"):
+                    received_data = received_data[len("<FILETRANSFERPROTOCOL>"):]
+                    file_size_str, file_name = received_data.split(SEPARATOR)
+                    file_size = int(file_size_str)
+                    
                     with open(f"output/{file_name}", "wb") as f:
-                        data = conn.recv(BUFFER)
-                        while data:
+                        received_bytes = 0
+                        while received_bytes < file_size:
                             if not self.handler.client_running:
                                 f.close()
                                 os.remove(f"output/{file_name}")
                                 break
-                            else:
-                                if data.endswith(ENDMARKER) is True:
-                                    f.write(data.rstrip(ENDMARKER))
-                                    break
-                                f.write(data)
-                                data = conn.recv(BUFFER)
-                        f.close()
-                        print("file received")
+                            data = conn.recv(min(BUFFER, file_size - received_bytes))
+                            if not data:
+                                break
+                            f.write(data)
+                            received_bytes += len(data)
+                        
+                        if received_bytes == file_size:
+                            print(f"File {file_name} received successfully")
+                        else:
+                            print("File received unsuccesfully")
 
                 elif received_data.startswith("<MESSAGETRANSFERPROTOCOL>") is True:
-                    message = received_data.strip("<MESSAGETRANSFERPROTOCOL>")
+                    received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
+                    message = received_data[len("<MESSAGETRANSFERPROTOCOL>"):]
                     print(f"{addr}> {message}")
 
 
@@ -76,9 +81,12 @@ class Server:
 
 
     def createIpHeader(self, connections, size=HEADER_LENGTH):
-        padded_ips = (connections + ["0.0.0.0"] * size)[:size]
-        binary_ips = [socket.inet_aton(ip) for ip in padded_ips]
-        return b"".join(binary_ips)
+        padded_connections = (connections + [["0.0.0.0", 0]] * size)[:size]
+        binary_entries = [
+            socket.inet_aton(ip) + struct.pack("!H", port)
+            for ip, port in padded_connections
+        ]
+        return b"".join(binary_entries)
 
     
     def stop(self):

@@ -6,3 +6,4 @@ class Handler:
         self.server_running = True
         self.client_running = True
         self.connections = []
+        self.username = self.IP
