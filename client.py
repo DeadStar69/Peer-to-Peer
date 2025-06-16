@@ -15,7 +15,7 @@ class Client:
 
             self.handler.connections = self.disassembleIpHeader(self.s.recv(20))
 
-            if self.handler.IP not in self.handler.connections: self.handler.connections.append(self.IP)
+            if self.handler.IP not in self.handler.connections: self.handler.connections.append(self.handler.IP)
 
             self.s.send(ENDMARKER)
                 
