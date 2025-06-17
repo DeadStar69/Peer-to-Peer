@@ -7,8 +7,9 @@ import json
 from statics import *
 
 class Server:
-    def __init__(self, handler, port):
+    def __init__(self, handler, port, client):
         self.handler = handler
+        self.client = client
         self.handler.PORT = port
 
         try:
@@ -48,6 +49,10 @@ class Server:
             history_temp = json.dumps(self.handler.history).encode()
             conn.send(f"{len(history_temp):#<20}".encode())
             conn.send(history_temp)
+
+            history_size = int(conn.recv(20).decode().rstrip("#"))
+            other_history = json.loads(conn.recv(history_size).decode())
+            self.handler.history = mergeLists(self.handler.history, other_history)
             
             client_port = int(conn.recv(5).decode().rstrip("#"))
             client_info = [addr[0], client_port]
@@ -75,10 +80,13 @@ class Server:
             elif received_data.startswith("<MESSAGETRANSFERPROTOCOL>"):
                 message = received_data[len("<MESSAGETRANSFERPROTOCOL>") :]
 
-                print(f"{addr[0]}> {message}")
-                self.handler.history.append(f"{addr[0]}> {message}")
+                # print(f"{addr[0]}> {message}")
+                self.handler.history.append(f"{addr[0]}, {client_port}> {message}")
 
-            #print("Current connections:", self.handler.connections)
+            os.system('cls')
+            [print(x) for x in self.handler.history]
+
+            conn.close()
 
         except socket.error as e:
             print("SERVER")

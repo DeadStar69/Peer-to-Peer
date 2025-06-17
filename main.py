@@ -7,8 +7,8 @@ from client import Client
 class Main:
     def __init__(self):
         self.handler = Handler()
-        self.server = Server(self.handler, int(input("Enter server port: ")))
         self.client = Client(self.handler)
+        self.server = Server(self.handler, int(input("Enter server port: ")), self.client)
 
     def run(self):
         server_thread = threading.Thread(target=self.server.run, daemon=True)
