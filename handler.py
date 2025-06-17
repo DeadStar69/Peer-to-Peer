@@ -1,5 +1,5 @@
 import socket
-import time
+from datetime import datetime
 
 from statics import *
 
@@ -11,4 +11,4 @@ class Handler:
         self.client_running = True
         self.connections = []
         self.connected = []
-        self.history = []
+        self.history = {}

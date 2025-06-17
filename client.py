@@ -1,7 +1,7 @@
 import socket
 import json
 import os
-import sys
+from datetime import datetime
 from statics import *
 
 class Client:
@@ -18,12 +18,12 @@ class Client:
             other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
             history_size = int(s.recv(20).decode().rstrip("#"))
             other_history = json.loads(s.recv(history_size).decode())
+            
+            self.handler.connections = mergeLists(self.handler.connections, other_connections)
+            self.handler.history = mergeHistories(self.handler.history, other_history)
 
             s.send(f"{self.handler.PORT:#<5}".encode())
-
-            self.handler.connections = mergeLists(self.handler.connections, other_connections)
-            self.handler.history = mergeLists(self.handler.history, other_history)
-
+            
             if [ip, port] not in self.handler.connections:
                 self.handler.connections.append([ip, port])
 
@@ -36,6 +36,11 @@ class Client:
 
             self.sendMessages(f"joined the network")
 
+        except json.decoder.JSONDecodeError:
+            pass
+
+        except TypeError:
+            pass
 
         except socket.error as e:
             print("Connection error:", e)
@@ -59,7 +64,7 @@ class Client:
                 other_history = json.loads(s.recv(history_size).decode())
 
                 self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                self.handler.history = mergeLists(self.handler.history, other_history)
+                self.handler.history = mergeHistories(self.handler.history, other_history)
 
                 history_temp = json.dumps(self.handler.history).encode()
                 s.send(f"{len(history_temp):#<20}".encode())
@@ -71,6 +76,12 @@ class Client:
 
 
                 s.close()
+
+            except json.decoder.JSONDecodeError:
+                pass
+
+            except TypeError:
+                pass
 
             except socket.error:
                 if [ip, port] in self.handler.connections:
@@ -94,7 +105,7 @@ class Client:
                     other_history = json.loads(s.recv(history_size).decode())
 
                     self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                    self.handler.history = mergeLists(self.handler.history, other_history)
+                    self.handler.history = mergeHistories(self.handler.history, other_history)
 
                     history_temp = json.dumps(self.handler.history).encode()
                     s.send(f"{len(history_temp):#<20}".encode())
@@ -108,13 +119,22 @@ class Client:
                 
                     temp.append(connection)
 
+                except json.decoder.JSONDecoder:
+                    pass
+
+                except TypeError:
+                    pass
+
                 except socket.error:
                     if connection in self.handler.connections:
                         self.handler.connections.remove(connection)
 
-        self.handler.history.append(f"{self.handler.IP}, {self.handler.PORT}> {message}")
+        self.handler.history[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = f"{self.handler.IP}, {self.handler.PORT}> {message}"
         os.system('cls')
-        [print(x) for x in self.handler.history]
+        for timestamp in sorted(self.handler.history):
+            print(f"[{timestamp}] {self.handler.history[timestamp]}")
+
+        print("> ", end="", flush=True)
 
     def sendFile(self, file_path: str, file_name: str):
         

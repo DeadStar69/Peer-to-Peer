@@ -12,6 +12,18 @@ SEPARATOR = "<SEPARATOR>"
 def mergeLists(list1, list2):
     return list1 + [item for item in list2 if item not in list1]
 
+def mergeHistories(h1, h2):
+    combined = {**h2, **h1}
+    result = {}
+    seen_values = set()
+
+    for k, v in sorted(combined.items()):
+        if v not in seen_values:
+            result[k] = v
+            seen_values.add(v)
+
+    return result
+
 def createIpHeader(connections, size=HEADER_LENGTH):
     padded_connections = (connections + [["0.0.0.0", 0]] * size)[:size]
     binary_entries = [socket.inet_aton(ip) + struct.pack("!H", port) for ip, port in padded_connections]

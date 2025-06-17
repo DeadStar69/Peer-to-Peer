@@ -8,7 +8,16 @@ class Main:
     def __init__(self):
         self.handler = Handler()
         self.client = Client(self.handler)
-        self.server = Server(self.handler, int(input("Enter server port: ")), self.client)
+        while True:
+            try:
+                port = int(input("Enter server port: "))
+                break
+
+            except ValueError:
+                continue
+            
+ 
+        self.server = Server(self.handler, port)
 
     def run(self):
         server_thread = threading.Thread(target=self.server.run, daemon=True)

@@ -3,13 +3,13 @@ import sys
 import os
 import threading
 import json
+from datetime import datetime
 
 from statics import *
 
 class Server:
-    def __init__(self, handler, port, client):
+    def __init__(self, handler, port):
         self.handler = handler
-        self.client = client
         self.handler.PORT = port
 
         try:
@@ -52,7 +52,7 @@ class Server:
 
             history_size = int(conn.recv(20).decode().rstrip("#"))
             other_history = json.loads(conn.recv(history_size).decode())
-            self.handler.history = mergeLists(self.handler.history, other_history)
+            self.handler.history = mergeHistories(self.handler.history, other_history)
             
             client_port = int(conn.recv(5).decode().rstrip("#"))
             client_info = [addr[0], client_port]
@@ -81,18 +81,25 @@ class Server:
                 message = received_data[len("<MESSAGETRANSFERPROTOCOL>") :]
 
                 # print(f"{addr[0]}> {message}")
-                self.handler.history.append(f"{addr[0]}, {client_port}> {message}")
+                self.handler.history[datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = f"{addr[0]}, {client_port}> {message}"
 
             os.system('cls')
-            [print(x) for x in self.handler.history]
+            for timestamp in sorted(self.handler.history):
+                print(f"[{timestamp}] {self.handler.history[timestamp]}")
+
+            print("> ", end="", flush=True)
 
             conn.close()
+
+        except json.decoder.JSONDecodeError:
+            pass
+
+        except TypeError:
+            pass
 
         except socket.error as e:
             print("SERVER")
             print(e)
-
-
 
     def stop(self):
         self.handler.server_running = False
