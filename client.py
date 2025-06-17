@@ -53,29 +53,10 @@ class Client:
                 continue
 
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(5)
-                s.connect((ip, port))
+                self.Mica(ip, port, message)
 
                 temp.append([ip, port])
 
-                other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-                history_size = int(s.recv(20).decode().rstrip("#"))
-                other_history = json.loads(s.recv(history_size).decode())
-
-                self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                self.handler.history = mergeHistories(self.handler.history, other_history)
-
-                history_temp = json.dumps(self.handler.history).encode()
-                s.send(f"{len(history_temp):#<20}".encode())
-                s.send(history_temp)
-
-                s.send(f"{self.handler.PORT:#<5}".encode())
-
-                s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
-
-
-                s.close()
 
             except json.decoder.JSONDecodeError:
                 pass
@@ -96,26 +77,7 @@ class Client:
                     continue
 
                 try:
-                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.settimeout(5)
-                    s.connect((ip, port))
-
-                    other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-                    history_size = int(s.recv(20).decode().rstrip("#"))
-                    other_history = json.loads(s.recv(history_size).decode())
-
-                    self.handler.connections = mergeLists(self.handler.connections, other_connections)
-                    self.handler.history = mergeHistories(self.handler.history, other_history)
-
-                    history_temp = json.dumps(self.handler.history).encode()
-                    s.send(f"{len(history_temp):#<20}".encode())
-                    s.send(history_temp)
-
-                    s.send(f"{self.handler.PORT:#<5}".encode())
-
-                    s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode())
-                    
-                    s.close()
+                    self.Mica(ip, port, message)
                 
                     temp.append(connection)
 
@@ -135,38 +97,62 @@ class Client:
             print(f"[{timestamp}] {self.handler.history[timestamp]}")
 
         print("> ", end="", flush=True)
+    
+    def Mica(self, ip, port, message):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5)
+        s.connect((ip, port)) # 1
 
-    def sendFile(self, file_path: str, file_name: str):
+        other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE)) # 2
+
+        history_size = int(s.recv(20).decode().rstrip("#")) # 3
+        other_history = json.loads(s.recv(history_size).decode()) # 3
+
+        self.handler.connections = mergeLists(self.handler.connections, other_connections) # merge 2
+        self.handler.history = mergeHistories(self.handler.history, other_history) # merge 3 i 4
+
+        history_temp = json.dumps(self.handler.history).encode()
+        s.send(f"{len(history_temp):#<20}".encode()) # 4
+        s.send(history_temp) # 4
+
+        s.send(f"{self.handler.PORT:#<5}".encode()) # 5
+
+        s.send(f"<MESSAGETRANSFERPROTOCOL>{message:#<{BUFFER - 25}}".encode()) # 6
         
-        for ip, port in self.handler.connections[:]:
-
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(5)
-                s.connect((ip, port))
-
-                other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
-
-                s.send(f"{port:#<5}".encode())
-
-                self.handler.connections = mergeLists(self.handler.connections, other_connections)
+        s.close()
 
 
-                file_size = os.path.getsize(file_path)
+    # def sendFile(self, file_path: str, file_name: str):
+        
+    #     for ip, port in self.handler.connections[:]:
 
-                s.send(f"<FILETRANSFERPROTOCOL>{file_size}{SEPARATOR}{file_name:#<{1024 - len(f'<FILETRANSFERPROTOCOL>{file_size}{SEPARATOR}')}}".encode())
+    #         try:
+    #             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #             s.settimeout(5)
+    #             s.connect((ip, port))
 
-                with open(file_path, "rb") as f:
-                    data = f.read(BUFFER)
-                    while data and self.handler.client_running:
-                        s.send(data)
-                        data = f.read(BUFFER)
+    #             other_connections = disassembleInfoHeader(s.recv(HEADER_SIZE))
 
-                s.close()
+    #             s.send(f"{port:#<5}".encode())
 
-            except socket.error:
-                if [ip, port] in self.handler.connections:
-                    self.handler.connections.remove([ip, port])
+    #             self.handler.connections = mergeLists(self.handler.connections, other_connections)
+
+
+    #             file_size = os.path.getsize(file_path)
+
+    #             s.send(f"<FILETRANSFERPROTOCOL>{file_size}{SEPARATOR}{file_name:#<{1024 - len(f'<FILETRANSFERPROTOCOL>{file_size}{SEPARATOR}')}}".encode())
+
+    #             with open(file_path, "rb") as f:
+    #                 data = f.read(BUFFER)
+    #                 while data and self.handler.client_running:
+    #                     s.send(data)
+    #                     data = f.read(BUFFER)
+
+    #             s.close()
+
+    #         except socket.error:
+    #             if [ip, port] in self.handler.connections:
+    #                 self.handler.connections.remove([ip, port])
 
 
     def stop(self):
